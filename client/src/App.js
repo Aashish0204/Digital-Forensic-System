@@ -3,7 +3,13 @@ import { useState, useEffect } from "react";
 import Admin from './pages/Admin'
 import Police from './pages/Police'
 import Lab from './pages/Lab'
+import ViewCase from './pages/ViewCase'
+import ViewReport from './pages/ViewReport'
+import Court from './pages/Court'
 import Case from './pages/Case'
+import CaseList from './pages/CaseList'
+import ReportList from './pages/ReportList'
+import CourtCaseList from './pages/CourtCaseList'
 import Report from './pages/Report'
 import Navigation from './components/Navigation'
 import './app.css'
@@ -35,10 +41,9 @@ function App() {
         const signer = await provider.getSigner();
         const address = await signer.getAddress();
 
-
         setAccount(address);
 
-        let contractAddress = "YOUR_COMPILED_CONTRACT_ADDRESS";
+        let contractAddress = "YOUR_CONTRACT_ADD";
 
         const contract = new ethers.Contract(
           contractAddress,
@@ -71,6 +76,18 @@ function App() {
           <Admin account={account} contract={contract} role={role} />
         }>
         </Route>
+        <Route exact path="/caseList/:policeAcc" element={
+          <CaseList account={account} contract={contract} role={role} />
+        }>
+        </Route>
+        <Route exact path="/reportList/:labAccount" element={
+          <ReportList account={account} contract={contract} role={role} />
+        }>
+        </Route>
+        <Route exact path="/caseOfCourtList/:courtAdd" element={
+          <CourtCaseList account={account} contract={contract} role={role} />
+        }>
+        </Route>
         <Route exact path="/police" element={
           <>
             <Police account={account} contract={contract} role={role} />
@@ -83,6 +100,18 @@ function App() {
           </>
         }>
         </Route>
+        <Route exact path="/viewCases/:caseId" element={
+          <>
+            <ViewCase role={role} account={account} contract={contract} />
+          </>
+        }>
+        </Route>
+        <Route exact path="/viewReport/:reportId" element={
+          <>
+            <ViewReport role={role} account={account} contract={contract} />
+          </>
+        }>
+        </Route>
         <Route exact path="/lab" element={
           <>
             <Lab account={account} contract={contract} role={role} />
@@ -92,6 +121,12 @@ function App() {
         <Route exact path="/reports/:reportId" element={
           <>
             <Report role={role} account={account} contract={contract} />
+          </>
+        }>
+        </Route>
+        <Route exact path="/court" element={
+          <>
+            <Court role={role} account={account} contract={contract} />
           </>
         }>
         </Route>

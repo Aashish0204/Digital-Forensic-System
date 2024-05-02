@@ -263,3 +263,23 @@ h4 {
         }
     }
 }
+
+.finalInference{
+    background-color: #cbcbcb;
+    border-radius: 10px;
+    min-height: 60px;
+    width: 90%;
+    margin: 20px 0px;
+    display: flex;
+    flex-direction: column;
+}
+
+.finalInference p{
+    padding: 0px 50px;
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+
+
+#inferencePart{
+    display: none;
+}

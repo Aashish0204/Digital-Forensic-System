@@ -21,18 +21,18 @@ const Admin = ({ account, contract, role }) => {
 
   const handleSubmit = (formData) => {
     console.log('Form data:', formData);
-    // setTimeout(() => {
-    //   getUsersDataFromContract();
-    // }, 5000);
   };
 
   //Dealing with get users data
 
   const [users, setUsers] = useState([]);
+  const [caseCount,setCaseCount] = useState();
+
 
   const getUsersDataFromContract = async () => {
     try {
       let AllUsersObj = [];
+      let tempCaseCount = 0;
 
       if (contract) {
         const data = await contract.getUsers();
@@ -40,9 +40,14 @@ const Admin = ({ account, contract, role }) => {
           let tempObj = {}
           tempObj["address"] = data[0][i];
           tempObj["role"] = data[1][i].charAt(0).toUpperCase() + data[1][i].slice(1);
+          const cases =  await contract.listAllCases(data[0][i]);
+          tempCaseCount += cases.length;
+          if(cases.length)
           console.log(tempObj["address"], tempObj["role"]);
           AllUsersObj.push(tempObj);
         }
+
+        setCaseCount(tempCaseCount);
       }
       setUsers(AllUsersObj)
     } catch (error) {
@@ -64,12 +69,6 @@ const Admin = ({ account, contract, role }) => {
   }, [contract])
 
 
-  if (!users || !account) {
-    return (
-      <>
-        <span className='loader'></span></>
-    )
-  }
 
   return (
     <div id='adminPage'>
@@ -89,11 +88,7 @@ const Admin = ({ account, contract, role }) => {
               </div>
               <div className="entry">
                 <div className="label">Number of Cases Registered</div>
-                <div className="value">5</div>
-              </div>
-              <div className="entry">
-                <div className="label">Number of Reports Generated</div>
-                <div className="value">4</div>
+                <div className="value">{caseCount}</div>
               </div>
             </div>
           </div>
@@ -116,7 +111,13 @@ const Admin = ({ account, contract, role }) => {
                       <li className="table-row" key={user.address}>
                         <div className="col col-1" data-label="user Address">{user.address}</div>
                         <div className="col col-2" data-label="user Role">{user.role}</div>
-                        <Link to={``} className="col col-3" data-label="Goto"><FiExternalLink className='icons' /></Link>
+                        {user.role == "Police" ?
+                        <Link to={`../caseList/${user.address}`} className="col col-3" data-label="Goto"><FiExternalLink className='icons' /></Link>:
+                        user.role == "Lab"?
+                        <Link to={`../reportList/${user.address}`} className="col col-3" data-label="Goto"><FiExternalLink className='icons' /></Link>
+                        :
+                        <Link to={`../caseOfCourtList/${user.address}`} className="col col-3" data-label="Goto"><FiExternalLink className='icons' /></Link>
+                        }
 
                       </li>
                     )
@@ -126,7 +127,7 @@ const Admin = ({ account, contract, role }) => {
               </ul>
             </div>
           </div> </> :
-
+// /reportList/:labAccount
         <>
           <div className="accessDenied">
             <div class="w3-display-middle">

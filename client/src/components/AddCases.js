@@ -55,8 +55,8 @@ const AddCases = ({ isOpen, onClose, onSubmit, contract ,account }) => {
                 if (currEvidenceFiles.length > 0) {
 
                     const headers = new Headers();
-                    headers.append("pinata_api_key", `YOUR_API_KEY`);
-                    headers.append("pinata_secret_api_key", `YOUR_API_SECRET_KEY`);
+                    headers.append("pinata_api_key", `PINATA API KEY`);
+                    headers.append("pinata_secret_api_key", `PINATA SECRET API KEY`);
 
                     for (let i = 0; i < currEvidenceFiles.length; i++) {
                         const formData = new FormData();
@@ -68,7 +68,7 @@ const AddCases = ({ isOpen, onClose, onSubmit, contract ,account }) => {
                         });
                         const data = await resData.json();
                         // console.log(data);
-                        Cids.push(`YOUR_GATEWAY/${data.IpfsHash}`);
+                        Cids.push(`PINATA GATEWAY${data.IpfsHash}`);
                     }
                 }
                 if (currCaseData['key1'].length > 0 || currCaseData['key2'].length > 0 || currCaseData['key3'].length > 0) {
@@ -87,8 +87,8 @@ const AddCases = ({ isOpen, onClose, onSubmit, contract ,account }) => {
                     formData.append('file', file);
 
                     const headers = new Headers();
-                    headers.append("pinata_api_key", `YOUR_API_KEY`);
-                    headers.append("pinata_secret_api_key", `YOUR_API_SECRET_KEY`);
+                    headers.append("pinata_api_key", `PINATA API KEY`);
+                    headers.append("pinata_secret_api_key", `PINATA SECRET API KEY`);
 
                     const resData = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
                         method: 'POST',
@@ -96,7 +96,7 @@ const AddCases = ({ isOpen, onClose, onSubmit, contract ,account }) => {
                         body: formData,
                     });
                     const data = await resData.json();
-                    Cids.push(`YOUR_GATEWAY/${data.IpfsHash}`);
+                    Cids.push(`PINATA GATEWAY${data.IpfsHash}`);
 
 
                 }

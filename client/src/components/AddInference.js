@@ -1,16 +1,15 @@
 import React from 'react'
 import { useState } from 'react';
-import '../styles/updateReport.css'
+import '../styles/addInference.css'
 
 
-const UpdateReport = ({reportId, isOpenReport, onClose, onSubmit, contract, account }) => {
-    //user address to be added
+const AddInference = ({ caseId, isOpen, onClose, onSubmit,contract }) => {
 
-    const [reportFiles, setReportFiles] = useState([]);
-    const [reportInference,setReportInference] = useState("");
+    const [courtFiles, setCourtFiles] = useState([]);
+    const [caseInference,setCaseInference] = useState("");
 
     const handleChange = (e) => {
-        setReportInference(e.target.value);
+        setCaseInference(e.target.value);
     };
 
     const handleSubmit = async (e) => {
@@ -23,36 +22,36 @@ const UpdateReport = ({reportId, isOpenReport, onClose, onSubmit, contract, acco
 
         //inference and file is must to add with
 
-        const currReportInference = reportInference;
-        const currReportFiles = reportFiles;
+        const currCaseInference = caseInference;
+        const currCourtFiles = courtFiles;
 
-        if(!currReportInference || currReportFiles.length==0 ){
-            alert("Invalid Report Update, Please Enter Complete Details");
+        if(!currCaseInference || currCourtFiles.length==0 ){
+            alert("Invalid Inference, Please Enter Complete Details");
             return;
         }
-        const Rids = [];
+        const InferenceId = [];
 
         //coping with files
 
-        if (currReportFiles) {
+        if (currCourtFiles) {
             try {
 
-                if (currReportFiles.length > 0) {
+                if (currCourtFiles.length > 0) {
 
                     const headers = new Headers();
                     headers.append("pinata_api_key", `PINATA API KEY`);
                     headers.append("pinata_secret_api_key", `PINATA SECRET API KEY`);
 
-                    for (let i = 0; i < currReportFiles.length; i++) {
+                    for (let i = 0; i < currCourtFiles.length; i++) {
                         const formData = new FormData();
-                        formData.append("file", currReportFiles[i]);
+                        formData.append("file", currCourtFiles[i]);
                         const resData = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
                             method: 'POST',
                             headers: headers,
                             body: formData,
                         });
                         const data = await resData.json();
-                        Rids.push(`PINATA GATEWAY${data.IpfsHash}`);
+                        InferenceId.push(`PINATA GATEWAY${data.IpfsHash}`);
                     }
                 }
                 onClose();
@@ -67,17 +66,17 @@ const UpdateReport = ({reportId, isOpenReport, onClose, onSubmit, contract, acco
 
         //pushing data into smart contract
 
-        const resFromContractUpdateReport = await contract.updateReport(reportId,currentTimestampSeconds,Rids,currReportInference);
+        const resFromContractAddInference = await contract.markCaseSolved(caseId,currentTimestampSeconds,InferenceId,currCaseInference);
 
-        if(resFromContractUpdateReport){
+        if(resFromContractAddInference){
             alert("Successfully Added a Case");
-            onSubmit({currReportInference,Rids});
+            onSubmit({currCaseInference,InferenceId});
         }
         else{
             alert("Some Problem Occured");
         }
 
-        setReportFiles([]);
+        setCourtFiles([]);
 
     }
 
@@ -89,31 +88,31 @@ const UpdateReport = ({reportId, isOpenReport, onClose, onSubmit, contract, acco
             document.getElementById("fileLabel").innerHTML = `${files.length} Files Selected`;
         }
         else {
-            document.getElementById("fileLabel").innerHTML = "Add Report Files";
+            document.getElementById("fileLabel").innerHTML = "Add Inference Files";
         }
-        setReportFiles(files);
+        setCourtFiles(files);
     }
 
 
-    if (!isOpenReport) {
+    if (!isOpen) {
         return null;
     }
 
     return (
-        <div className="popupUpdateReport prevent-select">
+        <div className="popupAddInference prevent-select">
             <div className="nav">
                 <button onClick={onClose}>X</button>
             </div>
-            <div className="UpdateReportWrapper">
-                <h2>Update Report</h2>
-                <form className='UpdateReportForm' onSubmit={handleSubmit}>
+            <div className="AddInferenceWrapper">
+                <h2>Add Inference</h2>
+                <form className='AddInferenceForm' onSubmit={handleSubmit}>
                     <div className="details">
-                        <input type="text" name="reportInference" id="reportInference" placeholder='Report Inference' onChange={handleChange}/>
+                        <input type="text" name="caseInference" id="caseInference" placeholder='Case Inference' onChange={handleChange}/>
 
-                        <input type="file" name="reportFiles" id="reportFiles" className="reportFiles" multiple onChange={handleFileChange}/>
-                        <label htmlFor="reportFiles" className="reportFilesLabel" id='fileLabel'>Add Report Files</label>
+                        <input type="file" name="courtFiles" id="courtFiles" className="courtFiles" multiple onChange={handleFileChange}/>
+                        <label htmlFor="courtFiles" className="courtFilesLabel" id='fileLabel'>Add Report Files</label>
                         {
-                            reportFiles.map((file) => {
+                            courtFiles.map((file) => {
                                 return (
                                     <p id='fileNames' key={file.lastModfied}>{file.name}</p>
                                 )
@@ -121,7 +120,7 @@ const UpdateReport = ({reportId, isOpenReport, onClose, onSubmit, contract, acco
                         }
                     </div>
                     <div className='btnDiv'>
-                        <button className="UpdateReportBtn bold" type='submit'>Update Report</button>
+                        <button className="AddInferenceBtn bold" type='submit'>Add Inference</button>
                     </div>
                 </form>
             </div>
@@ -129,4 +128,4 @@ const UpdateReport = ({reportId, isOpenReport, onClose, onSubmit, contract, acco
     );
 };
 
-export default UpdateReport;
+export default AddInference

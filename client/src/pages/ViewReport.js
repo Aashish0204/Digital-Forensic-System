@@ -2,31 +2,15 @@ import React from 'react'
 import '../styles/report.css'
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import UpdateReport from '../components/UpdateReport';
 import { IoIosArrowRoundBack } from "react-icons/io";
 import { Link } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 
 
-const Report = ({ contract, account, role }) => {
+const ViewReport = ({ contract, account, role }) => {
 
     const params = useParams();
     const reportId = params["reportId"];
-
-    //Dealing with update Reports data
-    const [isOpenReport, setIsOpenReport] = useState(false);
-    const openPopupReport = () => {
-        setIsOpenReport(true);
-
-    };
-    const closePopupReport = () => {
-        setIsOpenReport(false);
-
-    };
-    const handleReportSubmit = (formData) => {
-        console.log('Form data:', formData);
-    };
-
 
     //Dealing with reports,extrainfo,etc
     const [report, setReport] = useState([]);
@@ -34,6 +18,8 @@ const Report = ({ contract, account, role }) => {
     const [reportS, setReportS] = useState();
 
     const getReportFromContract = async () => {
+
+        console.log(role)
 
         if (contract && account) {
 
@@ -52,12 +38,10 @@ const Report = ({ contract, account, role }) => {
                     updatedObj.testDesc = tempObj.testDesc;
                     updatedObj.evidenceCids = tempObj.evidenceCids;
                     if (tempObj.reportInference.length === 0) {
-
                         updatedObj.reportInference = "Not Provided Yet";
                     }
                     else {
                         updatedObj.reportInference = tempObj.reportInference;
-
                     }
                     updatedObj.reportCids = tempObj.reportCids;
                     updatedObj.reportStatus = tempObj.reportStatus;
@@ -100,8 +84,7 @@ const Report = ({ contract, account, role }) => {
         if (document.getElementById('viewEvidenceBtn').innerHTML == "View Evidences") {
             if (account) {
                 const evidenceArrays = report.evidenceCids;
-                // console.log(Object.keys(evidenceArrays).length);
-                if (Object.keys(evidenceArrays).length == 1) {
+                if (Object.keys(evidenceArrays).length == 0) {
                     document.getElementById("noEvidenceH4").style.display = "block";
                 }
                 else {
@@ -174,32 +157,6 @@ const Report = ({ contract, account, role }) => {
     }
 
 
-    const markAsDone = async (e) => {
-        e.preventDefault();
-        if (report.reportStatus == "Pending") {
-            // console.log("i if")
-
-            const res = window.confirm("Are You sure You want to Mark Report As Done ?");
-            try {
-                if (res && account && report.reportStatus === "Pending") {
-                    const res = await contract.markReportAsDone(reportId);
-                    if (res) {
-                        alert("Successfully Marked as Done");
-                        // console.log(res);
-                        getReportFromContract();
-                        document.getElementById("markDoneBtn").innerHTML = "Marked Done";
-                        document.getElementById("markDoneBtn").classList.add("greenBgNonChangable");
-                        document.getElementById("markDoneBtn").classList.remove("redBg");
-                    }
-                }
-                else {
-                    return;
-                }
-            } catch (error) {
-                console.log(error);
-            }
-        }
-    }
 
     const handleRefresh = (e) => {
         e.preventDefault();
@@ -214,8 +171,7 @@ const Report = ({ contract, account, role }) => {
     }, [contract])
     return (
         <div className="reportPage">
-            <UpdateReport id="updateReportBox" reportId={reportId} isOpenReport={isOpenReport} onClose={closePopupReport} onSubmit={handleReportSubmit} contract={contract} account={account} />
-            {role == "lab" && account && contract ?
+            {(role == "lab" || role == "admin") && account && contract ?
                 <>
                     <Link className="goBack" to={"../../lab"}>
                         <IoIosArrowRoundBack id='backBtn' />
@@ -241,7 +197,7 @@ const Report = ({ contract, account, role }) => {
                             </div>
                             <div className="entry">
                                 <div className='label'>Report Status</div>
-                                <div className='value bold'> {report.reportStatus}</div>
+                                <div className='value bold' style={{color:"#00cc00"}}> {report.reportStatus}</div>
                             </div>
                             <div className="entry">
                                 <div className='label'>Report Inference</div>
@@ -294,18 +250,11 @@ const Report = ({ contract, account, role }) => {
                             </div>
                         </div>
                     </div>
-                    <div className="reportActions">
-                        <div className="leftOne">{
-                            report.reportStatus === "Pending" ?
-                                <div className=" action_btns redBg assignLab fs " onClick={markAsDone} title='Mark as Done' id='markDoneBtn'>Mark as Done</div> :
-                                <div className=" action_btns greenBgNonChangable assignLab  fs" id='markDoneBtn'>Marked Done</div>
-
-                        }</div>
+                    <div className="reportActions" style={{justifyContent:"flex-end"}}>
                         <div className="rightOne">
                             <div className=" action_btns greyBg viewEvidences" onClick={handleRefresh} >Refresh</div>
                             <div className=" action_btns blueBg viewEvidences" onClick={viewEvidence} id='viewEvidenceBtn'>View Evidences</div>
                             {reportS === 1 ? <div className=" action_btns blueBg viewReports" onClick={viewReports} id='viewReportBtn'>View Reports</div> : <></>}
-                            {report.reportStatus !== "Done" ? <div className=" action_btns greenBg assignLab" onClick={openPopupReport} >Update Report</div> : <></>}
                         </div>
 
                     </div>
@@ -342,4 +291,4 @@ const Report = ({ contract, account, role }) => {
     )
 }
 
-export default Report
+export default ViewReport

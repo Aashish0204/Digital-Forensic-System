@@ -62,13 +62,16 @@ const GrantCourt = ({caseId , isOpenGrantCourt, onClose, onSubmit, contract,cour
             </div>
             <div className="GrantCourtWrapper">
                 <h2>Grant Court</h2>
-                
+                {courtsAssigned.length ==0 ?
+                <p style={{margin:"5px 0px"}}>No Courts Assigned Yet </p>
+                :
                 <p style={{margin:"5px 0px"}}>Courts Assigned Are </p>
-                            {courtsAssigned.map((item)=>{
-                                return(
-                                    <p key={item}>{item}</p>
-                                )
-                            })}
+                }
+                {courtsAssigned.map((item)=>{
+                    return(
+                        <p key={item}>{item}</p>
+                    )
+                })}
                 <form className='GrantCourtForm' onSubmit={handleSubmit}>
                     <input type="text" name="courtAddress" id="courtAddress" placeholder='Court Address' onChange={handleChange} />
                     <div className='btnDiv'>

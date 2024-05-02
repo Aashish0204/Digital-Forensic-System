@@ -4,51 +4,26 @@ import { useState, useEffect } from 'react';
 import { FiExternalLink } from "react-icons/fi";
 import { Link } from 'react-router-dom';
 
+import { useParams } from 'react-router-dom';
 
 const Lab = ({ account, contract, role }) => {
 
-  // //Dealing with add cases data
-  // const [isOpen, setIsOpen] = useState(false);
-  // const openPopup = () => {
-  //   setIsOpen(true);
-
-  // };
-  // const closePopup = () => {
-  //   setIsOpen(false);
-
-  // };
-  // const handleSubmit = (formData) => {
-  //   console.log('Form data:', formData);
-  // };
-
-
-  // //Dealing with view case data
-  // const [isOpenCase, setIsOpenCase] = useState(false);
-  // const openSingleCase = () => {
-  //   setIsOpenCase(true);
-
-  // };
-  // const closeSingleCase = () => {
-  //   setIsOpenCase(false);
-
-  // };
-  // const handleSingleCaseSubmit = (formData) => {
-  //   console.log('Form data:', formData);
-  // };
-
   // //Dealing with get cases data
 
-
   const [reports, setReports] = useState([]);
+  const [pendingReportsCount, setPendingReportsCount] = useState(0);
 
   const getReportsFromContract = async () => {
     let AllReports = [];
 
-    console.log(role)
+    let listOfReportIds = [];
 
     if (contract && account) {
 
-      const listOfReportIds = await contract.listAllReports();
+      listOfReportIds = await contract.listAllReports(account);
+      console.log(listOfReportIds)
+
+      let tempPendingReportCount = 0;
 
       if (listOfReportIds) {
         for (let i = 0; i < listOfReportIds.length; i++) {
@@ -71,8 +46,12 @@ const Lab = ({ account, contract, role }) => {
               updatedObj.reportInference = tempObj.reportInference;
               updatedObj.reportCids = tempObj.reportCids;
               updatedObj.reportStatus = tempObj.reportStatus;
+              if(updatedObj.reportStatus == 'Pending'){
+                tempPendingReportCount+=1;
+              }
             }
             AllReports.push(updatedObj);
+            setPendingReportsCount(tempPendingReportCount)
 
           } catch (error) {
             alert(error);
@@ -103,12 +82,12 @@ const Lab = ({ account, contract, role }) => {
     <div className='labPage' id='labPage'>
       {role == "lab" && account && contract ?
         <>
-
           <div className="personalInfo">
             <div className="left">
               <div className="entry">
                 <div className="label">Your Address</div>
-                <div className="value">{account}</div>
+                  <div className="value">{account}</div>
+
               </div>
               <div className="entry">
                 <div className="label">Number of Cases Assigned</div>
@@ -116,7 +95,7 @@ const Lab = ({ account, contract, role }) => {
               </div>
               <div className="entry">
                 <div className="label">Number of  Reports Pending</div>
-                <div className="value">4</div>
+                <div className="value">{pendingReportsCount}</div>
               </div>
             </div>
           </div>

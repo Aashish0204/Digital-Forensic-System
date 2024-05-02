@@ -16,6 +16,8 @@ contract DigitalForensics{
         string[] evidenceCollected_by;//list of people collected evidence
         address labAssigned;//address of labs
         int[] reportIds;//list of reports ids
+        string inference;
+        string[] inferenceIds;
     }
 
     struct indiChainOfCustody {
@@ -63,7 +65,26 @@ contract DigitalForensics{
     //7. caseid to court access
     mapping(int => address[]) courtAccessedToCaseId;
 
+    //8. court Access to case Id
+    mapping(address => int[]) caseIdAssociatedToCourt;
+
     // useful Functions
+
+
+    function getAllCasesAssignedToCourt(address _add) public view returns (int[] memory val) {
+
+        bool hasAccess = false;
+        if(keccak256(abi.encodePacked(addressIdentity[msg.sender])) == keccak256(abi.encodePacked("admin"))){
+            hasAccess  = true;
+        }
+        else if(_add == msg.sender){
+            hasAccess = true;
+        }
+
+        if(hasAccess ){
+            return caseIdAssociatedToCourt[_add];
+        }
+    }
 
     function addressToString(address _address) internal pure returns (string memory) {
         bytes32 value = bytes32(uint256(uint160(_address)));
@@ -81,7 +102,7 @@ contract DigitalForensics{
     }
 
     constructor() {
-        addressIdentity["YOUR_ADMIN_ADDRESS"] = "admin";
+        addressIdentity[YOUR_ADMIN_ADDRESS] = "admin";
     }
 
     // police Functions
@@ -103,7 +124,7 @@ contract DigitalForensics{
         addressCases[msg.sender].push(newcaseId);
 
         //adding the case inside the case mapping
-        cases[newcaseId]=indiCase(_desc,_datetime,msg.sender,_evidenceCids,_evidenceCollected_by,address(0),new int[](0));
+        cases[newcaseId]=indiCase(_desc,_datetime,msg.sender,_evidenceCids,_evidenceCollected_by,address(0),new int[](0),"",new string[](0));
 
         //adding the evidence chain of custody for first time as created
         chainOfCustodies[newcaseId].push(
@@ -139,6 +160,7 @@ contract DigitalForensics{
         require(!isGrantedAlready,"Address is already Granted Access");
 
         courtAccessedToCaseId[_caseId].push(to_grant_add);
+        caseIdAssociatedToCourt[to_grant_add].push(_caseId);
 
         //now updating chain of custody
 
@@ -182,6 +204,7 @@ contract DigitalForensics{
                 courtAccessedToCaseId[_caseId].pop();
                 //now updating chain of custody
 
+
                 indiChainOfCustody memory newCoc;
                 newCoc.datetime = _datetime;
                 string memory to_revoke_string = addressToString(to_revoke_add);
@@ -192,6 +215,14 @@ contract DigitalForensics{
                 chainOfCustodies[_caseId].push(newCoc);
 
                 return true;
+            }
+        }
+
+        uint len = caseIdAssociatedToCourt[to_revoke_add].length;
+        for(uint i=0;i<len;i++){
+            if(caseIdAssociatedToCourt[to_revoke_add][i] == _caseId){
+                caseIdAssociatedToCourt[to_revoke_add][i] = caseIdAssociatedToCourt[to_revoke_add][len-1];
+                caseIdAssociatedToCourt[to_revoke_add].pop();
             }
         }
         return false;
@@ -305,10 +336,18 @@ contract DigitalForensics{
 
     //listAllCases
 
-    function listAllCases( ) public view returns( int[] memory listOfCases){
+    function listAllCases( address _add) public view returns( int[] memory listOfCases){
 
-        if(addressCases[msg.sender].length > 0){
-            return addressCases[msg.sender];
+        bool hasAccess = false;
+        if(keccak256(abi.encodePacked(addressIdentity[msg.sender])) == keccak256(abi.encodePacked("admin"))){
+            hasAccess  = true;
+        }
+        else if(_add == msg.sender){
+            hasAccess = true;
+        }
+
+        if(hasAccess  && addressCases[_add].length > 0){
+            return addressCases[_add];
         }
 
     }
@@ -340,7 +379,7 @@ contract DigitalForensics{
         indiChainOfCustody memory newCoc;
         newCoc.datetime = _datetime;
         string memory to_add_string = addressToString(msg.sender);
-        newCoc.action = string(abi.encodePacked("Updated Report by Lab ",to_add_string));
+        newCoc.action = string(abi.encodePacked("Updated Report by Lab ",to_add_string," with inference as ->",_reportInference));
 
         newCoc.performed_by = msg.sender;
         newCoc.status =  chainOfCustodies[caseId][lenOfCoc-1].status;
@@ -351,10 +390,18 @@ contract DigitalForensics{
 
     //listAllReports
 
-    function listAllReports( ) public view returns( int[] memory listOfReports){
+    function listAllReports( address _add) public view returns( int[] memory listOfReports){
 
-        if(addressReports[msg.sender].length > 0){
-            return addressReports[msg.sender];
+        bool hasAccess = false;
+        if(keccak256(abi.encodePacked(addressIdentity[msg.sender])) == keccak256(abi.encodePacked("admin"))){
+            hasAccess  = true;
+        }
+        else if(_add == msg.sender){
+            hasAccess = true;
+        }
+
+        if(hasAccess  && addressReports[_add].length > 0){
+            return addressReports[_add];
         }
 
     }
@@ -440,5 +487,26 @@ contract DigitalForensics{
         return(addressIdentity[msg.sender]);
     }
 
-}
+    //court
 
+
+    function markCaseSolved(int _caseId,int _datetime,string[] memory _inferenceId, string memory _inference) public returns (bool){
+
+        require(msg.sender == courtAccessedToCaseId[_caseId][0],"You don't have access to update state of Case");
+
+        cases[_caseId].inference = _inference;
+        cases[_caseId].inferenceIds = _inferenceId;
+
+        indiChainOfCustody memory newCoc;
+        newCoc.datetime = _datetime;
+        string memory to_add_string = addressToString(msg.sender);
+        newCoc.action = string(abi.encodePacked("Marked Case as Solved by ",to_add_string," with Inference as ->",_inference));
+        newCoc.performed_by = msg.sender;
+
+        newCoc.status =  'Solved';
+        chainOfCustodies[_caseId].push(newCoc);
+
+        return true;
+    }
+
+}

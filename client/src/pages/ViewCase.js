@@ -2,65 +2,31 @@ import React from 'react'
 import { useState, useEffect } from 'react';
 import '../styles/case.css'
 import axios from 'axios';
-import AssignLab from '../components/AssignLab';
-import GrantCourt from '../components/GrantCourt';
-import RevokeCourt from '../components/RevokeCourt';
 import { useParams } from 'react-router-dom';
 import { IoIosArrowRoundBack } from "react-icons/io";
 import { Link } from 'react-router-dom';
+import AddInference from '../components/AddInference';
 
 
-const Case = ({ contract, account, role }) => {
+const ViewCase = ({ contract, account, role }) => {
+
+    const [isOpen, setIsOpen] = useState(false);
+
+    const openPopup = () => {
+        setIsOpen(true);
+    };
+
+    const closePopup = () => {
+        setIsOpen(false);
+    };
+
+    const handleSubmit = (formData) => {
+        console.log('Form data:', formData);
+    };
+
 
     const params = useParams("caseId");
     const caseId = params["caseId"]
-    //Dealing with assign lab data
-    const [isOpenAssignLab, setIsOpenAssignLab] = useState(false);
-
-    const openAssignLabPopup = () => {
-        setIsOpenAssignLab(true);
-    };
-
-    const closeAssignLabPopup = () => {
-        setIsOpenAssignLab(false);
-    };
-
-    const handleAssignLabSubmit = (formData) => {
-        console.log('Form data:', formData);
-        getCaseFromContract();
-    };
-
-    //Dealing with grant Court data
-    const [isOpenGrantCourt, setIsOpenGrantCourt] = useState(false);
-
-    const openGrantCourtPopup = () => {
-        setIsOpenGrantCourt(true);
-    };
-
-    const closeGrantCourtPopup = () => {
-        setIsOpenGrantCourt(false);
-    };
-
-    const handleGrantCourtSubmit = (formData) => {
-        console.log('Form data:', formData);
-        getCaseFromContract();
-    };
-
-    //Dealing with revoke Court data
-    const [isOpenRevokeCourt, setIsOpenRevokeCourt] = useState(false);
-
-    const openRevokeCourtPopup = () => {
-        setIsOpenRevokeCourt(true);
-    };
-
-    const closeRevokeCourtPopup = () => {
-        setIsOpenRevokeCourt(false);
-    };
-
-    const handleRevokeCourtSubmit = (formData) => {
-        console.log('Form data:', formData);
-        getCaseFromContract();
-    };
 
     //main functions display information
 
@@ -70,8 +36,8 @@ const Case = ({ contract, account, role }) => {
     const [coc, setCoc] = useState([]);//done
     const [reportDetails, setReportDetails] = useState([])//done
     const [reportFiles, setReportFiles] = useState([])//done
-    const [inferenceFiles, setInferenceFiles] = useState([])//done
     const [reportS, setReportS] = useState()//done
+    const [inferenceFiles, setInferenceFiles] = useState([])//done
 
 
     const getCocFromContract = async () => {
@@ -89,6 +55,7 @@ const Case = ({ contract, account, role }) => {
                     individualCoc.action = cocData[i].action;
                     individualCoc.performed_by = cocData[i].performed_by;
                     individualCoc.status = cocData[i].status;
+
                     updatedCoc.push(individualCoc);
                 }
                 setCoc(updatedCoc)
@@ -111,11 +78,7 @@ const Case = ({ contract, account, role }) => {
                 const caseDetailsObj = await contract.getCaseDetails(caseId);
                 let updatedObj = {};
                 if (caseDetailsObj) {
-                    if (caseDetailsObj.owner != account) {
-                        // console.log("You Are Not Allowed to access This Case");
-                        alert("You are trying to access the case that you are not allowed")
-                        return;
-                    }
+
                     updatedObj.desc = caseDetailsObj.desc;
                     updatedObj.owner = caseDetailsObj.owner;
 
@@ -126,26 +89,19 @@ const Case = ({ contract, account, role }) => {
                     updatedObj.evidenceCollected_by = caseDetailsObj.evidenceCollected_by;
                     updatedObj.evidenceCids = caseDetailsObj.evidenceCids;
                     updatedObj.reportIds = caseDetailsObj.reportIds;
+
                     updatedObj.inference = caseDetailsObj.inference;
                     updatedObj.inferenceIds = caseDetailsObj.inferenceIds;
+
+                    const tempPendingCase = await contract.getCOC(caseId);
+                    updatedObj.status = tempPendingCase[tempPendingCase.length - 1].status;
 
                     if (caseDetailsObj.labAssigned === "0x0000000000000000000000000000000000000000") {
                         updatedObj.labAssigned = "No";
                     } else {
                         updatedObj.labAssigned = caseDetailsObj.labAssigned;
                     }
-                    // console.log(updatedObj)
 
-                    const courtAccessed = await contract.getCourtsAccessed(caseId);
-
-                    if (courtAccessed.length > 0) {
-                        updatedObj.courtsAccessed = courtAccessed;
-                    } else {
-                        updatedObj.courtsAccessed = "No";
-                    }
-
-                    const tempPendingCase = await contract.getCOC(caseId);
-                    updatedObj.status = tempPendingCase[tempPendingCase.length - 1].status;
 
                     updatedObj.evidenceCids.map((item, i) => {
                         if (i == Object.keys(updatedObj.evidenceCids).length - 1) {
@@ -153,7 +109,7 @@ const Case = ({ contract, account, role }) => {
                             axios.get(pinataUrl)
                                 .then(response => {
                                     const jsonData = response.data;
-                                    // console.log(jsonData)
+                                    console.log(jsonData)
                                     setExtraInfo(jsonData);
                                 })
                                 .catch(error => {
@@ -164,14 +120,11 @@ const Case = ({ contract, account, role }) => {
 
                 }
 
-
                 setCaseDetails(updatedObj);
-                // console.log(updatedObj.reportIds)
 
                 await getCocFromContract();
 
                 //getting report details
-
 
                 const reportId = await updatedObj.reportIds;
 
@@ -184,22 +137,16 @@ const Case = ({ contract, account, role }) => {
                     tempReportDetails.reportInference = reportDetailsReq.reportInference;
                     tempReportDetails.reportStatus = reportDetailsReq.reportStatus;
                     tempReportDetails.reportCids = reportDetailsReq.reportCids;
-                    // console.log(reportDetails.reportStatus);
                     if (tempReportDetails.reportStatus === "Pending") {
                         setReportS(1);
                         return;
                     }
                     else {
-                        // console.log(tempReportDetails)
                         setReportDetails(tempReportDetails)
                         setReportS(2);
                     }
 
                 }
-
-                // console.log(reportS)
-
-
 
             } catch (error) {
                 console.log(error);
@@ -215,29 +162,24 @@ const Case = ({ contract, account, role }) => {
     const viewEvidence = (e) => {
         e.preventDefault();
         if (document.getElementById('viewEvidenceBtn').innerHTML == "View Evidences") {
-            if (account == caseDetails.owner) {
-                const evidenceArrays = caseDetails.evidenceCids;
-                console.log(Object.keys(caseDetails.evidenceCids))
-                if (Object.keys(evidenceArrays).length == 1) {
-                    console.log("here")
-                    document.getElementById("noEvidenceH4").style.display = "block";
-                }
-                else {
-                    console.log("dkflaj")
-                    document.getElementById("evidenceText").style.display = "block";
-
-                    const evidences = evidenceArrays.map((item, i) => {
-                        // console.log(i);
-                        if (i != Object.keys(evidenceArrays).length - 1) {
-                            return (<a href={item} key={`a-${i}`} target='_blank' rel='noopener noreferrer'>
-                                <img key={`img-${i}`} src={item} alt='images' className="evidenceImages"></img>
-                            </a>)
-                        }
-                    })
-
-                    setEvidenceImages(evidences);
-                }
+            const evidenceArrays = caseDetails.evidenceCids;
+            console.log(Object.keys(evidenceArrays).length);
+            if (Object.keys(evidenceArrays).length === 0) {
+                document.getElementById("noEvidenceH4").style.display = "block";
+                return;
             }
+            document.getElementById("evidenceText").style.display = "block";
+
+            const evidences = evidenceArrays.map((item, i) => {
+                // console.log(i);
+                if (i != Object.keys(evidenceArrays).length - 1) {
+                    return (<a href={item} key={`a-${i}`} target='_blank' rel='noopener noreferrer'>
+                        <img key={`img-${i}`} src={item} alt='images' className="evidenceImages"></img>
+                    </a>)
+                }
+            })
+
+            setEvidenceImages(evidences);
 
             document.getElementById('viewEvidenceBtn').innerHTML = "Hide Evidences";
             document.getElementById('evidences').style.display = "block";
@@ -314,7 +256,10 @@ const Case = ({ contract, account, role }) => {
             document.getElementById('reportText').style.display = "none";
             document.getElementById('viewReportBtn').innerHTML = "View Report Details";
         }
+
     }
+
+
 
     const viewInferences = async (e) => {
         e.preventDefault();
@@ -370,23 +315,21 @@ const Case = ({ contract, account, role }) => {
         if (contract) {
             getCaseFromContract();
             getCocFromContract();
-            // console.log(caseDetails);
-            // console.log(coc);
         }
     }, [contract])
 
     return (<>
         <div className="casePage">
-            <AssignLab caseId={caseId} isOpenAssignLab={isOpenAssignLab} onClose={closeAssignLabPopup} onSubmit={handleAssignLabSubmit} contract={contract} />
-            <GrantCourt caseId={caseId} isOpenGrantCourt={isOpenGrantCourt} onClose={closeGrantCourtPopup} onSubmit={handleGrantCourtSubmit} contract={contract} courtsAssigned={caseDetails.courtsAccessed} />
-            <RevokeCourt caseId={caseId} isOpenRevokeCourt={isOpenRevokeCourt} onClose={closeRevokeCourtPopup} onSubmit={handleRevokeCourtSubmit} contract={contract} courtsAssigned={caseDetails.courtsAccessed} />
-
+            <AddInference caseId={caseId} isOpen={isOpen} onClose={closePopup} onSubmit={handleSubmit} contract={contract} />
             {
-                role == "police" && account && contract ?
+                (role == "court" || role == "admin") && account && contract ?
                     <>
-                        <Link to={"../../police"} className="goBack">
-                            <IoIosArrowRoundBack id='backBtn' />
-                        </Link>
+                        {role == "court" ?
+                            <Link to={`../../${role}`} className="goBack">
+                                <IoIosArrowRoundBack id='backBtn' />
+                            </Link> : <Link to={`../../caseList/${caseDetails.owner}`} className="goBack">
+                                <IoIosArrowRoundBack id='backBtn' />
+                            </Link>}
                         <div className="basicDetails">
                             <div className="leftCaseDetails">
                                 <h4>Case Details</h4>
@@ -471,16 +414,13 @@ const Case = ({ contract, account, role }) => {
                                 <div className="access">
                                     <h4>Access Details</h4>
                                     <div className="entry">
-                                        <div className='label'>Courts Granted</div>
-                                        <div className='value'>{caseDetails.courtsAccessed}</div>
-                                    </div>
-                                    <div className="entry">
                                         <div className='label'>Lab Assigned</div>
                                         <div className='value'>{caseDetails.labAssigned}</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
                         {caseDetails.status == "Solved" ?
                             <div className="finalInference">
                                 <h4>Final Inference</h4>
@@ -491,14 +431,17 @@ const Case = ({ contract, account, role }) => {
 
                             <div className=" action_btns blueBg viewEvidences" onClick={viewEvidence} id='viewEvidenceBtn'>View Evidences</div>
                             <div className=" action_btns blueBg viewCoc" id='viewCocBtn' onClick={viewCoc} >View CoC</div>
-                            {reportS == 2 ?
-                                <div className=" action_btns blueBg viewReports" id='viewReportBtn' onClick={viewReports}>View Report Details</div> : <></>}
+
                             {caseDetails.status == "Solved" ?
                                 <div className=" action_btns blueBg viewInference" id='viewInferenceBtn' onClick={viewInferences} >View Inference Reports</div> : <></>}
-                            {reportS == 0 ?
-                                <div className=" action_btns greenBg assignLab" onClick={openAssignLabPopup}>Assign Lab</div> : <></>}
-                            <div className=" action_btns greenBg grantCourt" onClick={openGrantCourtPopup}>Grant Court</div>
-                            <div className=" action_btns redBg revokeCourt" onClick={openRevokeCourtPopup}>Revoke Court</div>
+                            {reportS == 2 ?
+                                <div className=" action_btns blueBg viewReports" id='viewReportBtn' onClick={viewReports}>View Report Details</div> : <></>}
+                            {
+                                caseDetails.status === 'Unsolved' ?
+                                    <div className=" action_btns redBg markAsDone" onClick={openPopup} id='markAsDoneBtn'>Mark Solved</div> :
+                                    <div className=" action_btns greenBg markAsDone" id='markAsDoneBtn'>Solved</div>
+                            }
+
                         </div>
                         <div id="display">
                             <div id="evidencePart">
@@ -515,6 +458,7 @@ const Case = ({ contract, account, role }) => {
                                     {reportFiles}
                                 </div>
                             </div>
+                            
                             <div id="inferencePart">
                                 <h4 id='inferenceText'>Inference Report</h4>
                                 <h4 id="noInferenceH4">No Inference Report Posted</h4>
@@ -571,4 +515,4 @@ const Case = ({ contract, account, role }) => {
 };
 
 
-export default Case
+export default ViewCase
